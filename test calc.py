@@ -23,13 +23,13 @@ def get_signal(ticker: str) -> str:
     # Determine the buy/sell signal
     if rsi[-1] is None:
         signal = "Unknown"
-    elif rsi[-1] < 10:
+    elif rsi[-1] < 13:
         signal = "90% Buy"
     elif rsi[-1] < 20:
         signal = "80% Buy"
     elif rsi[-1] < 30:
         signal = "70% Buy"
-    elif rsi[-1] > 95:
+    elif rsi[-1] > 85:
         signal = "95% Sell"
     elif rsi[-1] > 80:
         signal = "80% Sell"
@@ -90,7 +90,7 @@ def get_stock_analysis(ticker_symbol=None) -> dict:
     else:
         # Handle case where no ticker symbol is passed in
         # Perform analysis on S&P 500 index
-        get_index_analysis()
+        get_index_analysis()       # plan to separate index and stock analysis
         # create dictionary for index analysis and return it
         index_data = {
             "current_price": 0,
