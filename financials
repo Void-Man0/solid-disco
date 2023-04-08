@@ -1,0 +1,46 @@
+import pandas as pd
+import os
+import yfinance as yf
+from dateutil.relativedelta import relativedelta
+
+# Define the ticker symbols
+tickers = ['AAPL', 'GOOG', '^GSPC']
+
+# Define the directory to save the data
+data_dir = 'data/'
+
+# Create the data directory if it does not exist
+if not os.path.exists(data_dir):
+    os.makedirs(data_dir)
+
+# Define the start and end date for the period of interest
+end_date = pd.Timestamp.today().strftime('%Y-%m-%d')
+
+# Subtract 1 year from end date to get start date
+start_date = (pd.to_datetime(end_date) - relativedelta(years=1)).strftime('%Y-%m-%d')
+
+# Loop over the tickers to extract the financial data and save it to files
+for ticker in tickers:
+    print(f'Extracting financial data for {ticker}...')
+    file_path = os.path.join(data_dir, f'{ticker}_financials.csv')
+
+    # Check if data already exists in cache
+    if os.path.isfile(file_path):
+        df = pd.read_csv(file_path, index_col='Date', parse_dates=True)
+        last_date = df.index[-1].strftime('%Y-%m-%d')
+        if last_date == pd.Timestamp.today().strftime('%Y-%m-%d'):
+            print(f'Financial data for {ticker} is up-to-date!')
+            continue
+        else:
+            start_date = last_date
+            print(f'Updating financial data for {ticker} from {start_date} to {end_date}...')
+
+    # Download quarterly financial data from Yahoo Finance
+    try:
+        df = yf.Ticker(ticker).quarterly_financials
+        df.index.name = 'Date'
+        df.columns = [f'{ticker}_{col}' for col in df.columns]
+        df.to_csv(file_path)
+        print(f'Quarterly financial data for {ticker} saved to {file_path}')
+    except Exception as e:
+        print(f'Error while downloading or saving quarterly financial data for {ticker}: {e}')
