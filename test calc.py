@@ -11,6 +11,11 @@ import ta
 import ta.momentum as momentum
 import talib
 import yfinance as yf
+from pip._vendor.cachecontrol.heuristics import BaseHeuristic
+from pyrate_limiter import Duration, RequestRate, Limiter
+from requests import Session
+from requests_cache import CacheMixin, SQLiteCache
+from requests_ratelimiter import LimiterMixin, MemoryQueueBucket
 
 
 
