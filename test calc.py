@@ -291,6 +291,40 @@ def get_stock_analysis(ticker_symbol: str) -> dict:
 
 
 if __name__ == '__main__':
+    # sets expiration date
+    class ExpiresAfterDays(BaseHeuristic):
+        def __init__(self, days=7):
+            self.days = days
+            # update headers
+        def update_headers(self, response):
+            expiration_date = datetime.datetime.now() + datetime.timedelta(days=self.days)
+            response.headers['Expires'] = expiration_date.strftime('%a, %d %b %Y %H:%M:%S GMT')
+            return response
+
+            # limits requests per second and cache data
+    class CachedLimiterSession(requests.Session):
+        def __init__(self, limiter=None, cache_name='http_cache', expire_after_days=7):
+            super().__init__()
+            self.headers['User-agent'] = 'my-program/1.0'
+            if limiter:
+                self.limiter = limiter
+                self.cache = self._create_cache(cache_name)
+                self.adapter = requests.adapters.HTTPAdapter(max_retries=5, pool_connections=10, pool_maxsize=10)
+                self.mount('https://', self.adapter)
+                self.mount('http://', self.adapter)
+                self.headers.update({'Cache-Control': 'no-cache'})
+                self.cache.update_headers_callback = ExpiresAfterDays(days=expire_after_days).update_headers
+                self.cachecontrol = requests_cache.core.CacheControlAdapter(self.cache, heuristic=ExpiresAfterDays(
+                    days=expire_after_days))
+                self.mount('http://', self.cachecontrol)
+                self.mount('https://', self.cachecontrol)
+            else:
+                self.limiter = None
+
+        def _create_cache(self, cache_name):
+            requests_cache.install_cache(cache_name, backend='sqlite', expire_after=-1)
+            return requests_cache.get_cache(cache_name)
+        
     # List of stock tickers to analyze
     stocks = ["AAPL", "GOOG", "MSFT", "AMD", "GME", "TGT", "BBY", "NVDA", "CRSR", "AMD", "TSLA", "AI", "AMZN", "SCHW",
               "INTC", "AMC", "PLTR", "COST", "WAL", "SCLX", "SRNEQ", "TRKA", "JNJ", "SIRI", "PLUG", "DLO", "NIO", "LEVI", "GCTK", "CHWRF", "LYSFF", "LITE"]
